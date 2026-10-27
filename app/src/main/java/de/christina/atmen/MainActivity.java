@@ -17,8 +17,6 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.util.Locale;
-
 public class MainActivity extends Activity {
 
     // Farben: ruhig, dunkel, ohne grelles Weiß
@@ -37,8 +35,6 @@ public class MainActivity extends Activity {
     private TextView summaryView;
     private BreathView breathView;
     private TextView phaseView;
-    private TextView countView;
-    private TextView elapsedView;
     private Button startButton;
 
     private int selected = 0;
@@ -46,8 +42,6 @@ public class MainActivity extends Activity {
     private long startedAt;
     private final Technique.State state = new Technique.State();
     private Technique.Kind lastKind = null;
-    private int lastCount = -1;
-    private long lastElapsedSec = -1;
 
     private final Runnable frame = new Runnable() {
         @Override public void run() {
@@ -121,7 +115,7 @@ public class MainActivity extends Activity {
         sumLp.topMargin = dp(12);
         root.addView(summaryView, sumLp);
 
-        // Kreis mit Phase und Sekunden in der Mitte
+        // Kreis mit der aktuellen Phase in der Mitte
         FrameLayout stage = new FrameLayout(this);
         breathView = new BreathView(this);
         stage.addView(breathView, new FrameLayout.LayoutParams(
@@ -134,12 +128,7 @@ public class MainActivity extends Activity {
         phaseView.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
         // Sprachausgabe (TalkBack) liest jede neue Phase vor
         phaseView.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-        countView = text("", 18, TEXT_SOFT);
-        countView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         center.addView(phaseView, wrap());
-        LinearLayout.LayoutParams countLp = wrap();
-        countLp.topMargin = dp(4);
-        center.addView(countView, countLp);
         stage.addView(center, new FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
 
@@ -147,10 +136,6 @@ public class MainActivity extends Activity {
             ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
         stageLp.topMargin = dp(8);
         root.addView(stage, stageLp);
-
-        elapsedView = text("", 15, TEXT_SOFT);
-        elapsedView.setTypeface(Typeface.MONOSPACE);
-        root.addView(elapsedView, wrap());
 
         startButton = new Button(this);
         startButton.setAllCaps(false);
@@ -180,8 +165,6 @@ public class MainActivity extends Activity {
         running = true;
         startedAt = SystemClock.uptimeMillis();
         lastKind = null;
-        lastCount = -1;
-        lastElapsedSec = -1;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         startButton.setText("Beenden");
         refreshChips();
@@ -200,8 +183,6 @@ public class MainActivity extends Activity {
     private void showIdle() {
         breathView.setLevel(0f);
         phaseView.setText("Bereit");
-        countView.setText("");
-        elapsedView.setText("");
         startButton.setText("Start");
     }
 
@@ -212,15 +193,6 @@ public class MainActivity extends Activity {
         if (state.kind != lastKind) {
             lastKind = state.kind;
             phaseView.setText(Technique.label(state.kind));
-        }
-        if (state.secondsLeft != lastCount) {
-            lastCount = state.secondsLeft;
-            countView.setText(String.valueOf(state.secondsLeft));
-        }
-        long sec = elapsed / 1000;
-        if (sec != lastElapsedSec) {
-            lastElapsedSec = sec;
-            elapsedView.setText(String.format(Locale.GERMANY, "%02d:%02d", sec / 60, sec % 60));
         }
     }
 
